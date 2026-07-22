@@ -1,0 +1,24 @@
+# Fresh, throwaway PostgreSQL for the labs. Does NOT touch your existing
+# local PostgreSQL 18 service — this container publishes on host port 5433.
+services:
+  db:
+    image: postgres:18
+    container_name: agentic_labs_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: agentic_labs
+      POSTGRES_USER: labs
+      POSTGRES_PASSWORD: labs_dev_pw
+    ports:
+      - "5433:5432"   # host:container — 5433 avoids your local PG on 5432
+    volumes:
+      # postgres:18+ stores data in a version subdir; mount the PARENT, not /data.
+      - agentic_labs_pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U labs -d agentic_labs"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  agentic_labs_pgdata:

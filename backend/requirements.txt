@@ -1,0 +1,14 @@
+# Web framework
+fastapi
+uvicorn[standard]
+python-multipart          # file uploads (Lab 1, Lab 4)
+python-dotenv             # load .env
+
+# Agent engine
+claude-agent-sdk          # Claude Code as a library; needs ANTHROPIC_API_KEY + claude CLI
+
+# Database (Lab 2 onward)
+psycopg[binary]
+
+# Document generation (Lab 4)
+python-docx
