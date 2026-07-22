@@ -33,6 +33,15 @@ COPY backend/ ./
 # Built frontend → /app/frontend/dist, which app/main.py mounts at "/"
 COPY --from=frontend /build/dist /app/frontend/dist
 
+# Run as a NON-ROOT user. The Claude Code CLI refuses the
+# --dangerously-skip-permissions flag (which the Agent SDK's bypassPermissions
+# mode passes) under root/sudo, so as root every agent call exits 1. A dedicated
+# user owns /app (so the app can write lab4 templates) and has a writable HOME
+# (so the CLI can store its config).
+RUN useradd -m -u 10001 appuser && chown -R appuser:appuser /app
+USER appuser
+ENV HOME=/home/appuser
+
 ENV PYTHONUNBUFFERED=1
 # Bind to the platform-provided $PORT (Render sets this); default for local runs.
 CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
