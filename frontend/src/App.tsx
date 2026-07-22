@@ -1,11 +1,21 @@
 import { NavLink, Route, Routes } from 'react-router-dom'
-import Lab1ShiftReport from './labs/Lab1ShiftReport.jsx'
-import Lab2PermitQuery from './labs/Lab2PermitQuery.jsx'
-import Lab3Triage from './labs/Lab3Triage.jsx'
-import { useTheme } from './lib/useTheme.js'
-import { Sun, Moon, ArrowRight } from './components/icons.jsx'
+import Lab1ShiftReport from './labs/Lab1ShiftReport'
+import Lab2PermitQuery from './labs/Lab2PermitQuery'
+import Lab3Triage from './labs/Lab3Triage'
+import Lab4JobAid from './labs/Lab4JobAid'
+import { useTheme } from './lib/useTheme'
+import { ArrowRight, Moon, Sun } from './components/icons'
 
-const LABS = [
+interface LabMeta {
+  path: string
+  num: number
+  title: string
+  sector: string
+  ready: boolean
+  blurb: string
+}
+
+const LABS: LabMeta[] = [
   {
     path: '/lab1', num: 1, title: 'Shift Report', sector: 'Manufacturing', ready: true,
     blurb: 'Turn end-of-shift machine logs into a one-page report with an exceptions section.',
@@ -19,7 +29,7 @@ const LABS = [
     blurb: 'Classify maintenance requests by urgency and route them — with human approval.',
   },
   {
-    path: '/lab4', num: 4, title: 'Job Aid Generator', sector: 'Public Sector', ready: false,
+    path: '/lab4', num: 4, title: 'Job Aid Generator', sector: 'Public Sector', ready: true,
     blurb: 'Generate a formatted job aid from a tested workflow and an agency template.',
   },
 ]
@@ -60,22 +70,6 @@ function Home() {
             </span>
           </NavLink>
         ))}
-      </div>
-    </div>
-  )
-}
-
-function ComingSoon({ num, title, sector }) {
-  return (
-    <div className="panel">
-      <div className="panel-head">
-        <div className="eyebrow">Lab {String(num).padStart(2, '0')} <span className="sector-tag">{sector}</span></div>
-        <h2>{title}</h2>
-        <p>Not built yet — the labs are implemented in order. This console unlocks after Lab {num - 1}.</p>
-      </div>
-      <div className="empty">
-        <div className="empty-mark">◵</div>
-        <p>Coming soon.</p>
       </div>
     </div>
   )
@@ -137,7 +131,7 @@ export default function App() {
           <Route path="/lab1" element={<Lab1ShiftReport />} />
           <Route path="/lab2" element={<Lab2PermitQuery />} />
           <Route path="/lab3" element={<Lab3Triage />} />
-          <Route path="/lab4" element={<ComingSoon num={4} title="Job Aid Generator" sector="Public Sector" />} />
+          <Route path="/lab4" element={<Lab4JobAid />} />
         </Routes>
       </main>
     </div>

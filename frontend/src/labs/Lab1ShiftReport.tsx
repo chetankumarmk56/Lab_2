@@ -1,35 +1,28 @@
-import { useEffect, useRef, useState } from 'react'
-import {
-  generateShiftReport,
-  setPreviousShift,
-  resetBaseline,
-  getBaselineInfo,
-} from '../api.js'
-import Markdown from '../components/Markdown.jsx'
-import { download, stamp } from '../lib/download.js'
-import { Upload, Download, Play, Bookmark, Reset, Layers, Check } from '../components/icons.jsx'
+import { useEffect, useState } from 'react'
+import { generateShiftReport, getBaselineInfo, resetBaseline, setPreviousShift } from '../api'
+import Markdown from '../components/Markdown'
+import { download, stamp } from '../lib/download'
+import { Bookmark, Check, Download, Layers, Play, Reset, Upload } from '../components/icons'
+import type { BaselineInfo, ToolCall } from '../types'
 
-function baselineSummary(b) {
-  if (!b) return ''
-  const bits = []
+function baselineSummary(b: BaselineInfo): string {
+  const bits: string[] = []
   if (typeof b.row_count === 'number') bits.push(`${b.row_count} readings`)
   if (typeof b.line_count === 'number') bits.push(`${b.line_count} lines`)
   return bits.join(' · ')
 }
 
 export default function Lab1ShiftReport() {
-  const [file, setFile] = useState(null)
+  const [file, setFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
   const [report, setReport] = useState('')
-  const [toolCalls, setToolCalls] = useState([])
+  const [toolCalls, setToolCalls] = useState<ToolCall[]>([])
   const [error, setError] = useState('')
-  const [baseline, setBaseline] = useState(null)
+  const [baseline, setBaseline] = useState<BaselineInfo | null>(null)
   const [savingPrev, setSavingPrev] = useState(false)
   const [notice, setNotice] = useState('')
-  const inputRef = useRef(null)
 
   // Load the current baseline so the user can see what they're comparing against.
-  // Degrades gracefully if the endpoint isn't available yet (e.g. backend not restarted).
   useEffect(() => {
     getBaselineInfo()
       .then((d) => setBaseline(d.baseline))
@@ -50,7 +43,7 @@ export default function Lab1ShiftReport() {
       if (data.baseline) setBaseline(data.baseline)
       if (data.error && !data.result) setError(data.error)
     } catch (e) {
-      setError(e.message)
+      setError((e as Error).message)
     } finally {
       setLoading(false)
     }
@@ -69,7 +62,7 @@ export default function Lab1ShiftReport() {
       setBaseline(res.baseline)
       setNotice(`“${file.name}” is now the baseline — your next upload will compare against it.`)
     } catch (e) {
-      setError(e.message)
+      setError((e as Error).message)
     } finally {
       setSavingPrev(false)
     }
@@ -83,7 +76,7 @@ export default function Lab1ShiftReport() {
       setBaseline(res.baseline)
       setNotice('Baseline reset to the original seeded sample.')
     } catch (e) {
-      setError(e.message)
+      setError((e as Error).message)
     } finally {
       setSavingPrev(false)
     }
@@ -104,7 +97,6 @@ export default function Lab1ShiftReport() {
         <div className="controls">
           <label className="file-field">
             <input
-              ref={inputRef}
               type="file"
               accept=".csv"
               onChange={(e) => { setFile(e.target.files?.[0] ?? null); setNotice('') }}

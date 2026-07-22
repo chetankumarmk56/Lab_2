@@ -1,0 +1,21 @@
+# Render Blueprint — one Docker web service that serves the API + built frontend.
+# Deploy: push to GitHub, then Render → New → Blueprint (select this repo).
+# Set the three `sync: false` secrets in the Render dashboard after it's created.
+services:
+  - type: web
+    name: agentic-labs
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false          # set in dashboard (secret)
+      - key: DATABASE_URL
+        sync: false          # your Neon connection string (includes ?sslmode=require)
+      - key: READONLY_DATABASE_URL
+        sync: false          # optional: labs_readonly role; falls back to DATABASE_URL
+      - key: CLAUDE_MODEL
+        value: claude-haiku-4-5

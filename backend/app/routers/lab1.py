@@ -4,15 +4,16 @@ The agent is file-based (reads current_shift.csv + previous_shift.csv from a
 temp dir). The "previous shift" baseline is persisted in Postgres via
 `lab1_baseline` so that "Set as previous" survives restarts and redeploys.
 """
+import datetime as dt
+import random
 import shutil
 import tempfile
 from pathlib import Path
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
-from fastapi.responses import FileResponse
+from fastapi.responses import Response
 
 from ..agents.lab1_shift_report import generate_shift_report
-from ..config import DATA_DIR
 from ..lab1_baseline import (
     baseline_info_dict,
     get_baseline,
@@ -23,7 +24,8 @@ from ..lab1_baseline import (
 
 router = APIRouter(prefix="/api/lab1", tags=["Lab 1 — Shift Report"])
 
-LAB1_DATA = DATA_DIR / "lab1"
+LINES = ["Line-1", "Line-2", "Line-3"]
+_LINE_BASE = {"Line-1": 74, "Line-2": 70, "Line-3": 68}
 
 
 def _decode(raw: bytes) -> str:
@@ -73,11 +75,37 @@ async def baseline_info():
     return {"baseline": baseline_info_dict(await get_baseline())}
 
 
+def _generate_sample_csv() -> str:
+    """A fresh, randomized current-shift log — different on every call. ~65% of
+    the time it seeds an anomaly on a random line (output collapse + downtime and
+    defect spikes) so the report's Exceptions section has something to flag."""
+    hours = 4
+    start = dt.datetime.now().replace(minute=0, second=0, microsecond=0) - dt.timedelta(hours=hours)
+    anomaly_line = random.choice(LINES) if random.random() < 0.65 else None
+    anomaly_hours = set(random.sample(range(hours), k=2)) if anomaly_line else set()
+
+    rows = ["timestamp,line,units_produced,downtime_minutes,defects"]
+    for line in LINES:
+        base = _LINE_BASE[line]
+        for h in range(hours):
+            ts = (start + dt.timedelta(hours=h)).strftime("%Y-%m-%dT%H:%M")
+            if line == anomaly_line and h in anomaly_hours:
+                units, downtime, defects = random.randint(15, 40), random.randint(20, 45), random.randint(7, 15)
+            else:
+                units, downtime, defects = base + random.randint(-4, 6), random.randint(0, 6), random.randint(0, 3)
+            rows.append(f"{ts},{line},{units},{downtime},{defects}")
+    return "\n".join(rows) + "\n"
+
+
 @router.get("/sample")
 async def sample():
-    """Download a sample current-shift log to try the lab with."""
-    return FileResponse(
-        LAB1_DATA / "sample_current_shift.csv",
+    """Download a fresh, randomized sample current-shift log (different each time)."""
+    stamp = dt.datetime.now().strftime("%Y%m%d-%H%M%S")
+    return Response(
+        content=_generate_sample_csv(),
         media_type="text/csv",
-        filename="sample_current_shift.csv",
+        headers={
+            "Content-Disposition": f'attachment; filename="sample_shift_{stamp}-{random.randint(1000, 9999)}.csv"',
+            "Cache-Control": "no-store",
+        },
     )

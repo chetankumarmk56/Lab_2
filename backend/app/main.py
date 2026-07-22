@@ -1,4 +1,7 @@
 """FastAPI entrypoint — serves the lab APIs and (in production) the built frontend."""
+import asyncio
+import logging
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -10,9 +13,25 @@ from fastapi import FastAPI  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 from fastapi.staticfiles import StaticFiles  # noqa: E402
 
-from .routers import lab1, lab2, lab3  # noqa: E402
+from .routers import lab1, lab2, lab3, lab4  # noqa: E402
 
-app = FastAPI(title="Agentic AI Onboarding Labs")
+log = logging.getLogger("agentic_labs")
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    # Auto-seed the database on startup (idempotent — never drops existing data).
+    try:
+        from db.seed import ensure_seeded  # top-level `db` package on PYTHONPATH
+
+        await asyncio.to_thread(ensure_seeded)
+        log.info("Database bootstrap complete.")
+    except Exception:
+        log.exception("Database auto-seed failed on startup; continuing to boot.")
+    yield
+
+
+app = FastAPI(title="Agentic AI Onboarding Labs", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -24,6 +43,7 @@ app.add_middleware(
 app.include_router(lab1.router)
 app.include_router(lab2.router)
 app.include_router(lab3.router)
+app.include_router(lab4.router)
 
 
 @app.get("/api/health")

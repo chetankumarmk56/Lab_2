@@ -1,11 +1,12 @@
 """Lab 3 — Work Order Triage API."""
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from ..agents.lab3_triage import triage
 from ..mcp_tools.workorders import (
     CREWS,
     assign_crew_write,
+    create_work_order,
     list_with_assignments,
     reset_assignments,
 )
@@ -22,6 +23,12 @@ class ApproveRequest(BaseModel):
     approved_by: str = "maintenance-lead"
 
 
+class CreateWorkOrderRequest(BaseModel):
+    machine: str
+    description: str
+    submitted_by: str = "Operator"
+
+
 @router.get("/crews")
 async def crews():
     return {"crews": CREWS}
@@ -30,6 +37,17 @@ async def crews():
 @router.get("/queue")
 async def queue():
     return {"orders": await list_with_assignments()}
+
+
+@router.post("/work-orders")
+async def create(body: CreateWorkOrderRequest):
+    """Add a new work order to the incoming queue (an operator filing a request)."""
+    machine = body.machine.strip()
+    description = body.description.strip()
+    if not machine or not description:
+        raise HTTPException(status_code=400, detail="Machine and a description of the issue are required.")
+    order = await create_work_order(machine, description, body.submitted_by.strip() or "Operator")
+    return {"ok": True, "order": order}
 
 
 @router.post("/triage")
@@ -52,7 +70,12 @@ async def run_triage():
             "reason": p.get("reason"),
         })
     merged.sort(key=lambda o: _URGENCY_ORDER.get(o.get("proposed_urgency"), 9))
-    return {"orders": merged, "raw": result["raw"], "error": result["error"]}
+    return {
+        "orders": merged,
+        "tool_calls": result["tool_calls"],
+        "raw": result["raw"],
+        "error": result["error"],
+    }
 
 
 @router.post("/approve")

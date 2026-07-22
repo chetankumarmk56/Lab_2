@@ -868,6 +868,241 @@ h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.02em; line-hei
 }
 .notice svg { flex: none; }
 
+/* ---- Lab 3 tool activity ------------------------------------------------ */
+.tool-activity {
+  margin-top: 18px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 15px 18px;
+  box-shadow: var(--shadow-sm);
+}
+.ta-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+.ta-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+.ta-item { display: flex; align-items: center; gap: 10px; font-size: 13.5px; flex-wrap: wrap; }
+.ta-ic { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; flex: none; }
+.ta-item.ok .ta-ic { background: var(--ok-soft); color: var(--ok); }
+.ta-item.denied .ta-ic { background: var(--routine-soft); color: var(--muted); }
+.ta-item code {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  background: var(--surface-3);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 2px 8px;
+  color: var(--ink);
+}
+.ta-desc { color: var(--muted); font-size: 12.5px; }
+.ta-count {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: var(--radius-pill);
+  padding: 2px 9px;
+}
+.ta-foot { margin: 12px 0 0; font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+
+/* ---- Lab 2 chat conversation -------------------------------------------- */
+/* Keep the question box pinned so you never scroll up to ask again. */
+.chat-console { position: sticky; top: 12px; z-index: 5; }
+.chat-log { display: flex; flex-direction: column; gap: 16px; margin-top: 22px; }
+.chat-log-head { display: flex; align-items: center; justify-content: space-between; padding: 0 2px; }
+.chat-log-title {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.chat-turn { margin-top: 0; }
+.chat-turn .result-head { align-items: flex-start; gap: 12px; }
+.chat-turn .rh-title {
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+  font-family: var(--font-sans);
+  font-size: 14.5px;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--ink);
+}
+.chat-turn .rh-title b { color: var(--ink); font-weight: 600; }
+.q-tag {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  flex: none;
+  border-radius: 5px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* ---- Lab 3 MCP tool tabs (read queue / write assignments) --------------- */
+.mcp-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 18px;
+}
+.mcp-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 14px 16px;
+  text-align: left;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.mcp-tab:hover { border-color: var(--line-strong); }
+.mcp-tab.active {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+  box-shadow: var(--shadow-sm), inset 0 -2px 0 var(--accent);
+}
+.mcp-tab .t-title { font-family: var(--font-display); font-weight: 700; font-size: 15px; }
+.mcp-tab .t-tool { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+.mcp-tab .t-tool code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--surface-3);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 1px 7px;
+  color: var(--ink);
+}
+.t-rw {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: var(--radius-pill);
+}
+.t-rw.read { background: var(--ok-soft); color: var(--ok); }
+.t-rw.write { background: var(--warn-soft); color: var(--warn); }
+.mcp-tab .t-count {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: var(--radius-pill);
+  padding: 2px 9px;
+}
+.mcp-tab:not(.active) .t-count { color: var(--muted); background: var(--surface-2); }
+
+.tab-caption { margin: 0; padding: 13px 18px 2px; color: var(--muted); font-size: 13px; line-height: 1.55; }
+.tab-caption code { font-family: var(--font-mono); font-size: 12px; color: var(--ink); }
+
+.add-form {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-2);
+}
+.add-form .field { flex: 1; min-width: 180px; }
+.add-form .field.desc { flex: 2; min-width: 240px; }
+
+@media (max-width: 640px) {
+  .mcp-tabs { grid-template-columns: 1fr; }
+}
+
+/* ---- Lab 4 wizard ------------------------------------------------------- */
+.wizard { display: flex; flex-direction: column; gap: 20px; }
+.wstep-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.step-num {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  flex: none;
+}
+.wstep-title { font-weight: 600; font-size: 14.5px; }
+.wstep-aux { margin-left: auto; }
+
+.segmented {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  flex-wrap: wrap;
+}
+.seg {
+  padding: 7px 15px;
+  border: none;
+  background: transparent;
+  color: var(--ink-soft);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.seg:hover:not(.active):not(:disabled) { color: var(--ink); }
+.seg.active { background: var(--surface); color: var(--accent-strong); font-weight: 600; box-shadow: var(--shadow-sm); }
+.seg:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.textarea {
+  width: 100%;
+  margin-top: 12px;
+  min-height: 150px;
+  resize: vertical;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ink);
+  background: var(--surface-2);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+}
+.textarea:focus { outline: none; background: var(--surface); border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-ring); }
+.wstep .file-field, .wstep .field, .wstep .select { margin-top: 12px; }
+.select.wide { width: 100%; max-width: 540px; }
+
+.wizard-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 2px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+.notice-inline { margin-top: 0; margin-bottom: 16px; }
+
 /* ---- Animations --------------------------------------------------------- */
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes fadeUp {

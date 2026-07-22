@@ -1,0 +1,18 @@
+# Dependencies & build artifacts (reinstalled/rebuilt inside the image)
+**/node_modules/
+**/.venv/
+frontend/dist/
+**/__pycache__/
+**/*.pyc
+**/.mypy_cache/
+**/.pytest_cache/
+
+# Secrets & local-only config — NEVER bake these into the image
+.env
+**/.env
+.claude/
+
+# VCS / editor / OS
+.git/
+.gitignore
+.DS_Store

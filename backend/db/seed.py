@@ -47,7 +47,7 @@ FIXED_PERMITS = [
 ]
 
 CREATE_PERMITS = """
-CREATE TABLE permits (
+CREATE TABLE IF NOT EXISTS permits (
     id             SERIAL PRIMARY KEY,
     permit_number  TEXT NOT NULL,
     permit_type    TEXT NOT NULL,
@@ -90,7 +90,7 @@ WORK_ORDERS = [
 ]
 
 CREATE_WORK_ORDERS = """
-CREATE TABLE work_orders (
+CREATE TABLE IF NOT EXISTS work_orders (
     id           SERIAL PRIMARY KEY,
     wo_number    TEXT NOT NULL,
     machine      TEXT NOT NULL,
@@ -102,7 +102,7 @@ CREATE TABLE work_orders (
 """
 
 CREATE_CREW_ASSIGNMENTS = """
-CREATE TABLE crew_assignments (
+CREATE TABLE IF NOT EXISTS crew_assignments (
     id            SERIAL PRIMARY KEY,
     work_order_id INTEGER NOT NULL REFERENCES work_orders(id),
     crew          TEXT NOT NULL,
@@ -151,56 +151,78 @@ def build_permits(n: int = 50) -> list[tuple]:
     return rows
 
 
-def main() -> None:
-    permits = build_permits()
+def _seed_permits_if_empty(cur) -> None:
+    cur.execute(CREATE_PERMITS)
+    cur.execute("SELECT COUNT(*) FROM permits")
+    if cur.fetchone()[0] == 0:
+        cur.executemany(
+            "INSERT INTO permits (permit_number, permit_type, applicant_name, address, "
+            "status, submitted_date, decision_date, fee) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
+            build_permits(),
+        )
+
+
+def _seed_work_orders_if_empty(cur) -> None:
+    cur.execute(CREATE_WORK_ORDERS)
+    cur.execute(CREATE_CREW_ASSIGNMENTS)
+    cur.execute("SELECT COUNT(*) FROM work_orders")
+    if cur.fetchone()[0] == 0:
+        cur.executemany(
+            "INSERT INTO work_orders (wo_number, machine, description, submitted_by, submitted_at) "
+            "VALUES (%s,%s,%s,%s,%s)",
+            WORK_ORDERS,
+        )
+
+
+def _ensure_baseline(cur) -> None:
+    # Lab 1 baseline store. ON CONFLICT DO NOTHING keeps a promoted baseline.
+    cur.execute(
+        "CREATE TABLE IF NOT EXISTS lab1_baseline ("
+        "  slot TEXT PRIMARY KEY, csv_text TEXT NOT NULL, "
+        "  source_name TEXT NOT NULL, updated_at TIMESTAMP NOT NULL DEFAULT now())"
+    )
+    seed_csv = (
+        Path(__file__).resolve().parents[1] / "data" / "lab1" / "previous_shift.csv"
+    ).read_text(encoding="utf-8-sig")
+    cur.execute(
+        "INSERT INTO lab1_baseline (slot, csv_text, source_name) "
+        "VALUES ('previous', %s, 'seeded sample') ON CONFLICT (slot) DO NOTHING",
+        (seed_csv,),
+    )
+
+
+def _ensure_readonly_role(cur) -> None:
+    cur.execute(ROLE_DO_BLOCK)
+    # Grant CONNECT on whatever database we're actually in (Neon names vary).
+    cur.execute("SELECT current_database()")
+    dbname = cur.fetchone()[0]
+    cur.execute(f'GRANT CONNECT ON DATABASE "{dbname}" TO labs_readonly')
+    cur.execute("GRANT USAGE ON SCHEMA public TO labs_readonly")
+    for table in ("permits", "work_orders", "crew_assignments"):
+        cur.execute(f"GRANT SELECT ON {table} TO labs_readonly")
+
+
+def ensure_seeded() -> None:
+    """Idempotent bootstrap — safe to run on every startup. Creates the lab
+    tables if missing, seeds them only when empty, and ensures the read-only
+    role + grants. Never drops data (so user changes survive restarts)."""
     with psycopg.connect(DATABASE_URL, autocommit=True) as conn:
         with conn.cursor() as cur:
-            # Lab 2
-            cur.execute("DROP TABLE IF EXISTS permits")
-            cur.execute(CREATE_PERMITS)
-            cur.executemany(
-                "INSERT INTO permits (permit_number, permit_type, applicant_name, address, "
-                "status, submitted_date, decision_date, fee) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
-                permits,
-            )
+            _seed_permits_if_empty(cur)
+            _seed_work_orders_if_empty(cur)
+            _ensure_baseline(cur)
+            _ensure_readonly_role(cur)
 
-            # Lab 3 (drop assignments first — FK to work_orders)
+
+def main() -> None:
+    """Destructive reset for local dev: drop the lab tables, then reseed fresh."""
+    with psycopg.connect(DATABASE_URL, autocommit=True) as conn:
+        with conn.cursor() as cur:
             cur.execute("DROP TABLE IF EXISTS crew_assignments")
             cur.execute("DROP TABLE IF EXISTS work_orders")
-            cur.execute(CREATE_WORK_ORDERS)
-            cur.execute(CREATE_CREW_ASSIGNMENTS)
-            cur.executemany(
-                "INSERT INTO work_orders (wo_number, machine, description, submitted_by, submitted_at) "
-                "VALUES (%s,%s,%s,%s,%s)",
-                WORK_ORDERS,
-            )
-
-            # Lab 1: baseline store for "Set as previous". Kept across re-seeds
-            # (ON CONFLICT DO NOTHING) so a promoted baseline is not clobbered.
-            cur.execute(
-                "CREATE TABLE IF NOT EXISTS lab1_baseline ("
-                "  slot TEXT PRIMARY KEY, csv_text TEXT NOT NULL, "
-                "  source_name TEXT NOT NULL, updated_at TIMESTAMP NOT NULL DEFAULT now())"
-            )
-            seed_csv = (
-                Path(__file__).resolve().parents[1] / "data" / "lab1" / "previous_shift.csv"
-            ).read_text(encoding="utf-8-sig")
-            cur.execute(
-                "INSERT INTO lab1_baseline (slot, csv_text, source_name) "
-                "VALUES ('previous', %s, 'seeded sample') ON CONFLICT (slot) DO NOTHING",
-                (seed_csv,),
-            )
-
-            # Read-only role + grants
-            cur.execute(ROLE_DO_BLOCK)
-            cur.execute("GRANT CONNECT ON DATABASE agentic_labs TO labs_readonly")
-            cur.execute("GRANT USAGE ON SCHEMA public TO labs_readonly")
-            cur.execute("GRANT SELECT ON permits TO labs_readonly")
-            cur.execute("GRANT SELECT ON work_orders TO labs_readonly")
-            cur.execute("GRANT SELECT ON crew_assignments TO labs_readonly")
-
-    print(f"Seeded {len(permits)} permits and {len(WORK_ORDERS)} work orders; "
-          "ensured lab1_baseline + read-only role 'labs_readonly'.")
+            cur.execute("DROP TABLE IF EXISTS permits")
+    ensure_seeded()
+    print("Reset + seeded: 50 permits, 9 work orders, lab1_baseline, read-only role 'labs_readonly'.")
 
 
 if __name__ == "__main__":

@@ -118,6 +118,32 @@ async def reset_assignments() -> dict:
     return await asyncio.to_thread(_reset_sync)
 
 
+def _create_work_order_sync(machine: str, description: str, submitted_by: str) -> dict:
+    conn = psycopg.connect(DATABASE_URL, autocommit=True)
+    try:
+        with conn.cursor() as cur:
+            # Continue the WO-45xx numbering used by the seed data.
+            cur.execute(
+                "SELECT COALESCE(MAX(CAST(SUBSTRING(wo_number FROM 'WO-(\\d+)') AS INTEGER)), 4500) + 1 "
+                "FROM work_orders"
+            )
+            row = cur.fetchone()
+            wo_number = f"WO-{row[0] if row else 4501}"
+            cur.execute(
+                "INSERT INTO work_orders (wo_number, machine, description, submitted_by, submitted_at, status) "
+                "VALUES (%s, %s, %s, %s, now(), 'New') "
+                "RETURNING id, wo_number, machine, description, submitted_by, submitted_at, status",
+                (wo_number, machine, description, submitted_by),
+            )
+            return _rows_as_dicts(cur)[0]
+    finally:
+        conn.close()
+
+
+async def create_work_order(machine: str, description: str, submitted_by: str = "Operator") -> dict:
+    return await asyncio.to_thread(_create_work_order_sync, machine, description, submitted_by)
+
+
 # ─────────────────────── MCP tools ───────────────────────
 @tool("read_work_orders", "Read the queue of new (unassigned) maintenance work orders.", {})
 async def read_work_orders(args: dict[str, Any]) -> dict[str, Any]:

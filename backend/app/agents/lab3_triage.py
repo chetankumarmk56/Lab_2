@@ -79,4 +79,9 @@ def _extract_json_array(text: str):
 async def triage() -> dict:
     result = await run_agent("Triage the current maintenance work-order queue.", _options())
     proposals = _extract_json_array(result["result"] or "") or []
-    return {"proposals": proposals, "raw": result["result"], "error": result["error"]}
+    return {
+        "proposals": proposals,
+        "tool_calls": result["tool_calls"],  # surfaced to the UI to show MCP tool usage
+        "raw": result["result"],
+        "error": result["error"],
+    }
