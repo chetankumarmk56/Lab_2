@@ -6,6 +6,7 @@ base64 so it downloads in one round-trip) plus a structured preview.
 """
 import asyncio
 import base64
+import datetime as dt
 import io
 import json
 import os
@@ -25,6 +26,7 @@ from ..lab4_docx import render_job_aid
 from ..lab4_templates import (
     default_template_id,
     list_templates,
+    template_brand,
     template_meta,
     template_path,
 )
@@ -76,6 +78,17 @@ def _slug(text: str) -> str:
     return s[:60] or "job-aid"
 
 
+def _stamp_dates(job_aid: dict) -> None:
+    """Fill effective/review/revision dates — the agent is told not to invent dates."""
+    today = dt.date.today()
+    control = job_aid.setdefault("control", {})
+    control.setdefault("effective_date", today.isoformat())
+    control.setdefault("review_date", (today + dt.timedelta(days=365)).isoformat())
+    for rev in job_aid.get("revision_history") or []:
+        if not rev.get("date"):
+            rev["date"] = today.isoformat()
+
+
 @router.get("/templates")
 async def templates():
     return {"templates": list_templates()}
@@ -120,6 +133,7 @@ async def generate(
 
     # ---- resolve the template canvas (upload > link > library) ----
     tmp_template: Optional[str] = None
+    brand = "1F3A93"
     try:
         if template_file is not None and (template_file.filename or "").lower().endswith(".docx"):
             raw = await template_file.read()
@@ -147,6 +161,7 @@ async def generate(
             tid = template_id or default_template_id()
             base_path = template_path(tid) or template_path(default_template_id())
             template_name, agency = template_meta(tid)
+            brand = template_brand(tid)
 
         # ---- run the agent, parse, render ----
         result = await generate_job_aid(text, doc_type, agency)
@@ -156,8 +171,9 @@ async def generate(
         if job_aid is None:
             raise HTTPException(502, "The agent did not return a valid job aid. Please try again.")
         job_aid.setdefault("document_type", doc_type)
+        _stamp_dates(job_aid)
 
-        docx_bytes = render_job_aid(job_aid, base_path)
+        docx_bytes = render_job_aid(job_aid, base_path, brand)
     finally:
         if tmp_template:
             try:

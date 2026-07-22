@@ -17,7 +17,7 @@ RUN apt-get update \
  && apt-get install -y --no-install-recommends curl ca-certificates gnupg \
  && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
  && apt-get install -y --no-install-recommends nodejs \
- && npm install -g @anthropic-ai/claude-code \
+ && npm install -g @anthropic-ai/claude-code@2.1.217 \
  && apt-get purge -y --auto-remove gnupg \
  && apt-get clean && rm -rf /var/lib/apt/lists/*
 

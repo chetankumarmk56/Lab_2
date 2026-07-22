@@ -129,3 +129,9 @@ def template_meta(template_id: str) -> tuple[str, str]:
     if not spec:
         return template_id, "the agency"
     return spec["name"], spec["agency"]
+
+
+def template_brand(template_id: str) -> str:
+    """Brand hex (no leading #) for a library template; blueprint blue by default."""
+    spec = _spec(template_id)
+    return spec["brand"] if spec else "1F3A93"

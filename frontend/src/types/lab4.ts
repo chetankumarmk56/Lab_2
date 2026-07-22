@@ -13,27 +13,85 @@ export interface TemplatesResult {
   templates: Template[]
 }
 
-export interface JobAidStep {
+/** Document-control metadata every government SOP/job aid carries. */
+export interface DocControl {
+  document_id?: string
+  version?: string
+  effective_date?: string
+  review_date?: string
+  owner?: string
+  approver?: string
+  classification?: string
+}
+
+export interface RoleResponsibility {
+  role: string
+  responsibility: string
+}
+
+export interface DecisionBranch {
+  condition: string
+  action: string
+}
+
+export interface Decision {
+  question: string
+  branches: DecisionBranch[]
+}
+
+export type CalloutType = 'warning' | 'caution' | 'note'
+
+export interface Callout {
+  type: CalloutType
+  text: string
+}
+
+export interface ProcedureStep {
   title: string
   detail?: string
-  note?: string
+  role?: string
+  decision?: Decision
+  callout?: Callout
 }
 
-export interface JobAidSection {
+export interface ProcedureSection {
   heading: string
-  steps: JobAidStep[]
+  steps: ProcedureStep[]
 }
 
-/** The structured job aid the agent produces from a tested workflow. */
+export interface Definition {
+  term: string
+  definition: string
+}
+
+export interface Revision {
+  version: string
+  date: string
+  author: string
+  summary: string
+}
+
+export interface Approval {
+  role: string
+  name?: string
+  date?: string
+}
+
+/** The structured, production-grade job aid the agent produces. */
 export interface JobAid {
   title: string
   document_type: string
-  audience?: string
+  control?: DocControl
   purpose?: string
-  overview?: string
+  scope?: string
+  audience?: string
+  roles?: RoleResponsibility[]
   prerequisites?: string[]
-  sections?: JobAidSection[]
-  tips?: string[]
+  procedure?: ProcedureSection[]
+  quick_reference?: string[]
+  definitions?: Definition[]
+  revision_history?: Revision[]
+  approvals?: Approval[]
 }
 
 /** Response from POST /api/lab4/generate. */

@@ -3,7 +3,7 @@ import { generateJobAid, getLab4Templates } from '../api'
 import Markdown from '../components/Markdown'
 import { download } from '../lib/download'
 import { Check, Download, Play, Upload } from '../components/icons'
-import type { DocType, GenerateJobAidResult, JobAid, Template } from '../types'
+import type { CalloutType, DocType, GenerateJobAidResult, JobAid, Template } from '../types'
 
 const DOC_TYPES: DocType[] = ['Job Aid', 'User Manual', 'Training Guide']
 const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
@@ -40,30 +40,82 @@ function Seg({ options, value, onChange, disabled }: SegProps) {
   )
 }
 
+const CALLOUT_EMOJI: Record<CalloutType, string> = { warning: '⚠️', caution: '❗', note: 'ℹ️' }
+
+/** Escape a value for a GFM table cell. */
+const cell = (v: string | undefined) => (v ?? '').replace(/\|/g, '\\|').replace(/\n+/g, ' ')
+
 function jobAidToMarkdown(ja: JobAid): string {
   const L: string[] = []
+  const c = ja.control ?? {}
   L.push(`# ${ja.title || 'Job Aid'}`)
-  const meta = [ja.document_type, ja.audience && `Audience: ${ja.audience}`].filter(Boolean).join(' · ')
+  const meta = [ja.document_type, ja.audience, c.classification].filter(Boolean).join(' · ')
   if (meta) L.push(`*${meta}*`)
-  if (ja.purpose) L.push(`\n**Purpose.** ${ja.purpose}`)
-  if (ja.overview) L.push(`\n${ja.overview}`)
+
+  const controlRows: [string, string | undefined][] = [
+    ['Document ID', c.document_id],
+    ['Version', c.version],
+    ['Effective date', c.effective_date],
+    ['Next review', c.review_date],
+    ['Owner', c.owner],
+    ['Approver', c.approver],
+  ]
+  const ctrl = controlRows.filter(([, v]) => v)
+  if (ctrl.length) {
+    L.push('\n## Document Control', '| Field | Value |', '|---|---|')
+    ctrl.forEach(([k, v]) => L.push(`| ${k} | ${cell(v)} |`))
+  }
+
+  if (ja.purpose) L.push('\n## Purpose', ja.purpose)
+  if (ja.scope) L.push('\n## Scope', ja.scope)
+
+  if (ja.roles?.length) {
+    L.push('\n## Roles & Responsibilities', '| Role | Responsibility |', '|---|---|')
+    ja.roles.forEach((r) => L.push(`| ${cell(r.role)} | ${cell(r.responsibility)} |`))
+  }
+
   if (ja.prerequisites?.length) {
     L.push('\n## Before You Start')
     ja.prerequisites.forEach((p) => L.push(`- ${p}`))
   }
-  ;(ja.sections ?? []).forEach((sec) => {
-    L.push(`\n## ${sec.heading || 'Steps'}`)
+
+  ;(ja.procedure ?? []).forEach((sec) => {
+    L.push(`\n## ${sec.heading || 'Procedure'}`)
     ;(sec.steps ?? []).forEach((s, i) => {
-      let line = `${i + 1}. **${s.title || s.detail || ''}**`
+      let line = `${i + 1}. **${s.title || ''}**`
+      if (s.role) line += ` _[${s.role}]_`
       if (s.detail && s.detail !== s.title) line += ` — ${s.detail}`
-      if (s.note) line += `  \n   _⚠ ${s.note}_`
       L.push(line)
+      if (s.decision) {
+        L.push(`   - **${s.decision.question}**`)
+        ;(s.decision.branches ?? []).forEach((b) => L.push(`     - ${b.condition} → ${b.action}`))
+      }
+      if (s.callout) {
+        L.push(`   > ${CALLOUT_EMOJI[s.callout.type] ?? 'ℹ️'} **${s.callout.type.toUpperCase()}:** ${s.callout.text}`)
+      }
     })
   })
-  if (ja.tips?.length) {
-    L.push('\n## Tips & Edge Cases')
-    ja.tips.forEach((t) => L.push(`- ${t}`))
+
+  if (ja.quick_reference?.length) {
+    L.push('\n## Quick Reference Card')
+    ja.quick_reference.forEach((q, i) => L.push(`${i + 1}. ${q}`))
   }
+
+  if (ja.definitions?.length) {
+    L.push('\n## Definitions & Acronyms', '| Term | Definition |', '|---|---|')
+    ja.definitions.forEach((d) => L.push(`| ${cell(d.term)} | ${cell(d.definition)} |`))
+  }
+
+  if (ja.revision_history?.length) {
+    L.push('\n## Revision History', '| Version | Date | Author | Summary |', '|---|---|---|---|')
+    ja.revision_history.forEach((r) => L.push(`| ${cell(r.version)} | ${cell(r.date)} | ${cell(r.author)} | ${cell(r.summary)} |`))
+  }
+
+  if (ja.approvals?.length) {
+    L.push('\n## Approval', '| Role | Name | Date |', '|---|---|---|')
+    ja.approvals.forEach((a) => L.push(`| ${cell(a.role)} | ${cell(a.name)} | ${cell(a.date)} |`))
+  }
+
   return L.join('\n')
 }
 
@@ -247,6 +299,9 @@ export default function Lab4JobAid() {
           <div className="result-head">
             <div className="rh-title">
               <b>{result.job_aid.document_type || 'Job Aid'}</b>
+              {result.job_aid.control?.document_id && (
+                <span className="meta-pill">{result.job_aid.control.document_id} · v{result.job_aid.control.version ?? '1.0'}</span>
+              )}
               {result.template_name && <span className="meta-pill">{result.template_name}</span>}
             </div>
             <div className="result-actions">
