@@ -122,6 +122,29 @@ END
 $$
 """
 
+# Lab 5 — encrypted store of user-supplied external DB connections. The password
+# column holds a Fernet ciphertext (BYTEA); plaintext is NEVER stored. This table
+# is deliberately NOT granted to labs_readonly — only trusted service code reads
+# it via the read-write DATABASE_URL, so no agent-issued SELECT can reach it.
+CREATE_LAB5_CONNECTIONS = """
+CREATE TABLE IF NOT EXISTS lab5_connections (
+    id                   SERIAL PRIMARY KEY,
+    name                 TEXT,
+    driver               TEXT NOT NULL CHECK (driver IN ('postgres','mysql','mssql')),
+    host                 TEXT NOT NULL,
+    port                 INTEGER NOT NULL,
+    database             TEXT NOT NULL,
+    username             TEXT NOT NULL,
+    password_ciphertext  BYTEA NOT NULL,
+    ssl_mode             TEXT,
+    status               TEXT NOT NULL DEFAULT 'saved',
+    last_error_category  TEXT,
+    last_verified_at     TIMESTAMPTZ,
+    created_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at           TIMESTAMPTZ NOT NULL DEFAULT now()
+)
+"""
+
 
 def build_permits(n: int = 50) -> list[tuple]:
     random.seed(42)
@@ -191,6 +214,12 @@ def _ensure_baseline(cur) -> None:
     )
 
 
+def _ensure_lab5_connections(cur) -> None:
+    # NOT granted to labs_readonly on purpose — the encrypted credential table
+    # must never be readable by the read-only role or an agent-issued query.
+    cur.execute(CREATE_LAB5_CONNECTIONS)
+
+
 def _ensure_readonly_role(cur) -> None:
     cur.execute(ROLE_DO_BLOCK)
     # Grant CONNECT on whatever database we're actually in (Neon names vary).
@@ -211,6 +240,7 @@ def ensure_seeded() -> None:
             _seed_permits_if_empty(cur)
             _seed_work_orders_if_empty(cur)
             _ensure_baseline(cur)
+            _ensure_lab5_connections(cur)
             _ensure_readonly_role(cur)
 
 

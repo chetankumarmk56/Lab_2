@@ -34,7 +34,8 @@ Render deploys from a Git repo. Push your code (the `Dockerfile`, `render.yaml`,
 - When prompted, set the secrets:
   - `ANTHROPIC_API_KEY` — your Anthropic key
   - `DATABASE_URL` — the Neon string from step 1
-  - `READONLY_DATABASE_URL` — optional (step 1.3)
+  - `READONLY_DATABASE_URL` — optional (step 1.3); for Lab 5, point it at the restricted role
+  - `CREDENTIAL_ENCRYPTION_KEY` — **required for Lab 5**; a Fernet key for encrypting stored DB passwords. Generate: `python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"`
   - `CLAUDE_MODEL` — already `claude-haiku-4-5` (change if you want)
 - Click **Apply / Deploy**. First build takes a few minutes (it installs Node, the
   `claude` CLI, and Python deps, and builds the frontend).

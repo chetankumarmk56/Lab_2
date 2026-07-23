@@ -12,11 +12,28 @@ from claude_agent_sdk import (
     AssistantMessage,
     ClaudeAgentOptions,
     ResultMessage,
+    ToolResultBlock,
     ToolUseBlock,
+    UserMessage,
     query,
 )
 
 log = logging.getLogger(__name__)
+
+
+def _tool_result_text(content: Any) -> str:
+    """Flatten a ToolResultBlock's content (list of text blocks, or a string)."""
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        parts: list[str] = []
+        for block in content:
+            if isinstance(block, dict) and block.get("type") == "text":
+                parts.append(block.get("text", ""))
+            elif isinstance(block, str):
+                parts.append(block)
+        return "".join(parts)
+    return ""
 
 
 async def _single_message_stream(prompt: str) -> AsyncIterator[dict[str, Any]]:
@@ -32,6 +49,7 @@ async def run_agent(prompt: str, options: ClaudeAgentOptions) -> dict:
     """Run a single agent turn to completion, collecting the result and tool calls."""
     result_text = ""
     tool_calls: list[dict] = []
+    tool_results: dict[str, str] = {}  # tool_use_id -> result text
     error: str | None = None
     stderr_lines: list[str] = []
 
@@ -53,7 +71,11 @@ async def run_agent(prompt: str, options: ClaudeAgentOptions) -> dict:
             if isinstance(message, AssistantMessage):
                 for block in message.content:
                     if isinstance(block, ToolUseBlock):
-                        tool_calls.append({"name": block.name, "input": block.input})
+                        tool_calls.append({"id": block.id, "name": block.name, "input": block.input})
+            elif isinstance(message, UserMessage):
+                for block in getattr(message, "content", None) or []:
+                    if isinstance(block, ToolResultBlock):
+                        tool_results[block.tool_use_id] = _tool_result_text(block.content)
             elif isinstance(message, ResultMessage):
                 if message.subtype == "success":
                     result_text = message.result or ""
@@ -69,4 +91,4 @@ async def run_agent(prompt: str, options: ClaudeAgentOptions) -> dict:
         if detail and detail not in error:
             error = f"{error}\n{detail}"
 
-    return {"result": result_text, "tool_calls": tool_calls, "error": error}
+    return {"result": result_text, "tool_calls": tool_calls, "tool_results": tool_results, "error": error}

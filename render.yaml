@@ -17,5 +17,7 @@ services:
         sync: false          # your Neon connection string (includes ?sslmode=require)
       - key: READONLY_DATABASE_URL
         sync: false          # optional: labs_readonly role; falls back to DATABASE_URL
+      - key: CREDENTIAL_ENCRYPTION_KEY
+        sync: false          # Lab 5: Fernet key for encrypting stored target-DB passwords
       - key: CLAUDE_MODEL
         value: claude-haiku-4-5

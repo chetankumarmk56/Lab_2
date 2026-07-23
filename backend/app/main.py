@@ -13,7 +13,7 @@ from fastapi import FastAPI  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 from fastapi.staticfiles import StaticFiles  # noqa: E402
 
-from .routers import lab1, lab2, lab3, lab4  # noqa: E402
+from .routers import lab1, lab2, lab3, lab4, lab5  # noqa: E402
 
 log = logging.getLogger("agentic_labs")
 
@@ -28,6 +28,16 @@ async def lifespan(_app: FastAPI):
         log.info("Database bootstrap complete.")
     except Exception:
         log.exception("Database auto-seed failed on startup; continuing to boot.")
+    try:
+        from .lab5.credentials import is_configured
+
+        if not is_configured():
+            log.warning(
+                "Lab 5: CREDENTIAL_ENCRYPTION_KEY is not set — connecting databases will "
+                "fail until it is configured."
+            )
+    except Exception:  # noqa: BLE001
+        pass
     yield
 
 
@@ -44,6 +54,7 @@ app.include_router(lab1.router)
 app.include_router(lab2.router)
 app.include_router(lab3.router)
 app.include_router(lab4.router)
+app.include_router(lab5.router)
 
 
 @app.get("/api/health")

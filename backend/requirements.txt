@@ -12,3 +12,9 @@ psycopg[binary]
 
 # Document generation (Lab 4)
 python-docx
+
+# Lab 5 — external DB connectors + credential encryption + read-only SQL validation
+cryptography              # Fernet encryption of stored target-DB passwords at rest
+sqlglot                   # AST-based read-only SQL validation (dialect-aware, pure Python)
+PyMySQL                   # MySQL driver (pure Python, no system libs)
+pymssql                   # SQL Server driver (manylinux wheel bundles FreeTDS); import is guarded

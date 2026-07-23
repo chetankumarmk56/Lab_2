@@ -109,3 +109,18 @@ export const Trash = (p: IconProps) => (
     <path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
   </svg>
 )
+
+export const Database = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <ellipse cx="12" cy="5" rx="9" ry="3" />
+    <path d="M3 5v6c0 1.66 4 3 9 3s9-1.34 9-3V5M3 11v6c0 1.66 4 3 9 3s9-1.34 9-3v-6" />
+  </svg>
+)
+
+export const Server = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <rect x="2" y="3" width="20" height="8" rx="2" />
+    <rect x="2" y="13" width="20" height="8" rx="2" />
+    <path d="M6 7h.01M6 17h.01" />
+  </svg>
+)

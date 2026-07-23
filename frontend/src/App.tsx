@@ -3,6 +3,7 @@ import Lab1ShiftReport from './labs/Lab1ShiftReport'
 import Lab2PermitQuery from './labs/Lab2PermitQuery'
 import Lab3Triage from './labs/Lab3Triage'
 import Lab4JobAid from './labs/Lab4JobAid'
+import Lab5Connections from './labs/Lab5Connections'
 import { useTheme } from './lib/useTheme'
 import { ArrowRight, Moon, Sun } from './components/icons'
 
@@ -31,6 +32,10 @@ const LABS: LabMeta[] = [
   {
     path: '/lab4', num: 4, title: 'Job Aid Generator', sector: 'Public Sector', ready: true,
     blurb: 'Generate a formatted job aid from a tested workflow and an agency template.',
+  },
+  {
+    path: '/lab5', num: 5, title: 'MCP Server Builder', sector: 'Capstone', ready: true,
+    blurb: 'Connect your own database and auto-generate a deployed, read-only MCP query server.',
   },
 ]
 
@@ -132,6 +137,7 @@ export default function App() {
           <Route path="/lab2" element={<Lab2PermitQuery />} />
           <Route path="/lab3" element={<Lab3Triage />} />
           <Route path="/lab4" element={<Lab4JobAid />} />
+          <Route path="/lab5" element={<Lab5Connections />} />
         </Routes>
       </main>
     </div>
