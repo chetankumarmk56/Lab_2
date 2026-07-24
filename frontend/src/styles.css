@@ -1200,3 +1200,482 @@ h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.02em; line-hei
   .theme-toggle .tt-label { display: none; }
   .content { padding: 26px 18px 56px; }
 }
+
+/* ============================================================================
+   LAB 2 — "native hybrid" chat surface. All new selectors are l2-* .
+   Self-contained: carries its own dataset-strip (l2-dataset/l2-ds-*), refusal,
+   and money-column right-align (scoped under .l2-table-scroll) so replacing the
+   old Lab-2 block never unstyles anything. Reuses (never redefines) tokens +
+   .md .data-table .code-card .cc-label .copy-btn .btn-* .chips .chip .spinner
+   .error .eyebrow .linkish .rows-note.
+   ========================================================================== */
+
+/* ---- Root: three-band flex column (header · messages · composer) ------- */
+/* No entrance transform here: this is the full-viewport-height container, so a
+   translateY on it would briefly overflow the viewport on load. Inner regions
+   (header, intro, exchanges) animate themselves instead. */
+.l2-root {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* Desktop (sidebar visible): pin the composer to the viewport bottom and
+   scroll ONLY the message region. 40px = .content top padding; -72px cancels
+   .content bottom padding, so the route is exactly one viewport tall and the
+   window never scrolls. The 860px boundary ABUTS the shell's own
+   `@media (max-width: 860px)` sidebar collapse — no fractional dead zone.
+   NOTE: coupled to .content { padding: 40px … 72px } — if that padding
+   changes, update these two constants. */
+@media (min-width: 861px) {
+  .l2-root {
+    height: calc(100vh - 40px);   /* fallback for engines without dvh */
+    height: calc(100dvh - 40px);
+    margin-bottom: -72px;
+  }
+}
+
+/* ---- Slim persistent header -------------------------------------------- */
+.l2-head {
+  flex: none;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px 24px;
+  flex-wrap: wrap;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+.l2-head .eyebrow { display: flex; align-items: center; gap: 10px; margin-bottom: 7px; }
+.l2-sector {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  padding: 2px 9px;
+}
+.l2-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(20px, 2.6vw, 27px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.l2-head-aux { display: flex; align-items: center; gap: 6px 16px; flex-wrap: wrap; }
+.l2-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.l2-hint svg { color: var(--accent); flex: none; }
+.l2-hint b { color: var(--ink); font-weight: 700; }
+
+/* ---- Scroll region + jump-to-latest ------------------------------------ */
+.l2-scroll {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.l2-stream {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain; /* don't chain scroll to the window */
+}
+.l2-thread {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 820px;   /* editorial reading measure, centered */
+  margin: 0 auto;
+  padding: 24px 2px 12px;
+}
+.l2-anchor { height: 1px; flex: none; scroll-margin-bottom: 8px; } /* bottom follow sentinel */
+.l2-jump {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 15px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  animation: fadeUp 0.2s ease both;
+}
+.l2-jump:hover { background: var(--accent-strong); }
+.l2-jump svg { transform: rotate(90deg); } /* point the arrow downward */
+
+/* ---- One exchange = user bubble + agent turn --------------------------- */
+.l2-exchange {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: fadeUp 0.28s ease both;
+}
+
+/* User: compact, right-aligned accent bubble */
+.l2-user { display: flex; justify-content: flex-end; }
+.l2-bubble {
+  max-width: min(80%, 560px);
+  padding: 11px 15px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-radius: var(--radius) var(--radius) var(--radius-sm) var(--radius);
+  box-shadow: var(--shadow-sm);
+  font-size: 14.5px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* Agent: full width, opened by a mono diamond micro-label */
+.l2-agent { display: flex; flex-direction: column; }
+.l2-agent-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 9px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.l2-diamond { color: var(--accent); font-size: 12px; line-height: 1; }
+.l2-agent.is-refusal .l2-diamond { color: var(--safety); }
+.l2-answer { animation: fadeUp 0.22s ease both; } /* wraps .md; the ▍ caret flows inline */
+.l2-note { margin: 0; color: var(--muted); font-size: 13.5px; }
+
+/* Phase state (before the answer text streams) */
+.l2-phase {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  align-self: flex-start;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--ink-soft);
+  font-size: 13.5px;
+}
+
+/* Refusal badge — the read-only guarantee, made visible */
+.l2-refusal {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  align-self: flex-start;
+  margin-bottom: 11px;
+  padding: 9px 13px;
+  background: var(--safety-soft);
+  color: var(--safety);
+  border: 1px solid color-mix(in srgb, var(--safety) 30%, transparent);
+  border-radius: var(--radius-sm);
+  font-size: 13.5px;
+  font-weight: 500;
+}
+.l2-refusal svg { flex: none; }
+
+/* ---- Evidence: SQL + results ------------------------------------------- */
+/* Shared container chrome for both the live (plain) and collapsed (details) forms. */
+.l2-evidence {
+  margin-top: 13px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+/* Collapsible form (finished turns) */
+.l2-evidence > summary {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 14px;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  transition: color 0.15s;
+}
+.l2-evidence > summary::-webkit-details-marker { display: none; }
+.l2-evidence > summary::marker { content: ''; }
+.l2-evidence > summary:hover { color: var(--ink); }
+.l2-evidence > summary svg { color: var(--accent); flex: none; }
+.l2-evidence > summary::after {
+  content: '›';
+  margin-left: auto;
+  font-size: 15px;
+  color: var(--faint);
+  transition: transform 0.18s ease;
+}
+.l2-evidence[open] > summary::after { transform: rotate(90deg); }
+.l2-evidence[open] > summary { border-bottom: 1px solid var(--line); }
+
+/* Live form (streaming turn): always expanded, non-interactive header */
+.l2-evidence-livehead {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--line);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.l2-evidence-livehead svg { color: var(--accent); flex: none; }
+
+.l2-evidence-body { padding: 14px; display: flex; flex-direction: column; gap: 14px; }
+.l2-res-label {
+  margin: 0 0 8px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.l2-res-card { border: 1px solid var(--line); border-radius: var(--radius-sm); overflow: hidden; }
+.l2-table-scroll { overflow-x: auto; } /* wide tables scroll here, never the page body */
+
+/* Right-align monetary columns — scoped so it never touches other labs' tables. */
+.l2-table-scroll .data-table td.num,
+.l2-table-scroll .data-table th.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* Per-answer download actions (reuse .btn .btn-ghost .btn-sm) */
+.l2-actions { display: flex; gap: 8px; margin-top: 13px; flex-wrap: wrap; }
+
+/* ---- Empty / intro state (dataset + chips live here only) -------------- */
+.l2-intro {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: min(5vh, 40px) 2px 12px;
+  animation: fadeUp 0.4s ease both;
+}
+.l2-intro-head { display: flex; align-items: flex-start; gap: 14px; }
+.l2-intro-mark {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  flex: none;
+  border-radius: 11px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-size: 21px;
+  font-weight: 800;
+  box-shadow: var(--shadow-sm);
+}
+.l2-intro-head h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(19px, 2.4vw, 23px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.l2-intro-head p { margin: 6px 0 0; color: var(--ink-soft); font-size: 14.5px; max-width: 58ch; line-height: 1.6; }
+.l2-intro-examples-label {
+  display: block;
+  margin-bottom: 2px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+/* Inline <code> inside intro prose + composer hint — consistent mono treatment. */
+.l2-intro-head p code,
+.l2-composer-hint code {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  color: var(--muted);
+  background: var(--surface-3);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 1px 6px;
+}
+
+/* ---- Intro dataset strip (intro only; renamed from the old .dataset-strip) */
+.l2-dataset {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  padding: 13px 16px;
+}
+.l2-ds-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--ink-soft);
+  margin-bottom: 11px;
+}
+.l2-ds-head svg { color: var(--accent); flex: none; }
+.l2-ds-head b { color: var(--ink); font-weight: 700; }
+.l2-ds-groups { display: flex; flex-direction: column; gap: 9px; }
+.l2-ds-group { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.l2-ds-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  width: 78px;
+  flex: none;
+}
+.l2-ds-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  padding: 3px 10px;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+.l2-ds-pill em {
+  font-style: normal;
+  color: var(--accent);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Composer (pinned bottom) ------------------------------------------ */
+.l2-composer {
+  flex: none;
+  position: sticky; /* anchors to viewport bottom on mobile; harmless on desktop */
+  bottom: 0;
+  z-index: 3;
+  background: var(--bg);
+  padding: 14px 0 16px;
+  border-top: 1px solid var(--line);
+}
+.l2-composer-inner { max-width: 820px; margin: 0 auto; }
+.l2-composer-box {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  padding: 7px 7px 7px 15px;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.l2-composer-box:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-ring); }
+.l2-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  outline: none;
+  resize: none;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--ink);
+  padding: 8px 0;
+  max-height: 160px;
+  overflow-y: auto;
+}
+.l2-input::placeholder { color: var(--faint); }
+.l2-send {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: none;
+  border-radius: 10px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+.l2-send:not(:disabled):hover { background: var(--accent-strong); }
+.l2-send:not(:disabled):active { transform: translateY(1px); }
+.l2-send:disabled { opacity: 0.45; cursor: not-allowed; }
+.l2-send .spinner { border-color: color-mix(in srgb, var(--accent-ink) 35%, transparent); border-top-color: var(--accent-ink); }
+.l2-composer-hint {
+  margin: 9px 2px 0;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: var(--faint);
+  text-align: center;
+}
+
+/* Accessible visually-hidden label */
+.l2-vh {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---- Dark refinements (tokens already adapt; add a little depth) ------- */
+:root[data-theme='dark'] .l2-bubble {
+  box-shadow: var(--shadow-sm), 0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+:root[data-theme='dark'] .l2-evidence { background: var(--surface); }
+:root[data-theme='dark'] .l2-composer-box { background: var(--surface-2); }
+
+/* ---- Reduced motion: kill the entrance animations + send transition ---- */
+@media (prefers-reduced-motion: reduce) {
+  .l2-root,
+  .l2-exchange,
+  .l2-answer,
+  .l2-intro,
+  .l2-jump { animation: none; }
+  .l2-send { transition: none; }
+}
+
+/* ---- Responsive: below the 860px sidebar-collapse breakpoint ----------- */
+@media (max-width: 860px) {
+  /* Natural height; seat the sticky composer flush at the true page bottom by
+     absorbing .content's 56px bottom padding (mobile shell value). */
+  .l2-root { margin-bottom: -56px; }
+  .l2-thread { gap: 18px; padding: 18px 0 8px; }
+  .l2-bubble { max-width: 88%; }
+  .l2-head { padding-bottom: 12px; }
+}
