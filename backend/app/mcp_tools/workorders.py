@@ -39,9 +39,9 @@ def _rows_as_dicts(cur) -> list[dict]:
 
 # ─────────────────────── sync DB ops ───────────────────────
 def _read_queue_sync() -> list[dict]:
-    conn = psycopg.connect(READONLY_DATABASE_URL, autocommit=True)
+    conn = psycopg.connect(READONLY_DATABASE_URL)
     try:
-        conn.execute("SET default_transaction_read_only = on")
+        conn.read_only = True
         with conn.cursor() as cur:
             cur.execute(
                 "SELECT id, wo_number, machine, description, submitted_by, submitted_at "
@@ -53,9 +53,9 @@ def _read_queue_sync() -> list[dict]:
 
 
 def _list_with_assignments_sync() -> list[dict]:
-    conn = psycopg.connect(READONLY_DATABASE_URL, autocommit=True)
+    conn = psycopg.connect(READONLY_DATABASE_URL)
     try:
-        conn.execute("SET default_transaction_read_only = on")
+        conn.read_only = True
         with conn.cursor() as cur:
             cur.execute(
                 "SELECT w.id, w.wo_number, w.machine, w.description, w.submitted_by, "

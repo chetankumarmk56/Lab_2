@@ -29,7 +29,8 @@ class PostgresDriver(DatabaseDriver):
         return psycopg.connect(**kwargs)
 
     def set_session_read_only(self, conn) -> None:
-        conn.execute("SET default_transaction_read_only = on")
+        conn.autocommit = False
+        conn.read_only = True
 
     def apply_statement_timeout(self, conn, ms: int) -> None:
         conn.execute(f"SET statement_timeout = {int(ms)}")

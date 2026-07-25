@@ -40,9 +40,9 @@ def _cell(value: Any) -> Any:
 
 
 def _run_select_sync(sql: str, limit: int) -> dict:
-    conn = psycopg.connect(READONLY_DATABASE_URL, autocommit=True)
+    conn = psycopg.connect(READONLY_DATABASE_URL)
     try:
-        conn.execute("SET default_transaction_read_only = on")
+        conn.read_only = True
         with conn.cursor() as cur:
             cur.execute(sql)
             columns = [d.name for d in cur.description] if cur.description else []
