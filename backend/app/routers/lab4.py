@@ -19,6 +19,7 @@ import httpx
 from docx import Document
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
+from pypdf import PdfReader
 
 from ..agents.lab4_job_aid import generate_job_aid
 from ..config import DATA_DIR
@@ -37,18 +38,34 @@ LAB4_DATA = DATA_DIR / "lab4"
 DOC_TYPES = {"Job Aid", "User Manual", "Training Guide", "Training"}
 
 
+def _extract_pdf_text(raw: bytes) -> str:
+    """Extract the text layer from a PDF. Returns '' for scanned / image-only PDFs
+    (no text layer); the caller's minimum-length check turns that into a clear 400."""
+    try:
+        reader = PdfReader(io.BytesIO(raw))
+        return "\n".join((page.extract_text() or "") for page in reader.pages).strip()
+    except Exception as exc:  # noqa: BLE001 - corrupt / encrypted / not-really-a-PDF
+        raise HTTPException(400, f"Couldn't read that PDF: {exc}")
+
+
 def _extract_text(filename: str, raw: bytes) -> str:
-    """Pull plain text from an uploaded .docx / .txt / .md file."""
-    if (filename or "").lower().endswith(".docx"):
+    """Pull plain text from an uploaded .docx / .pdf / .txt / .md file."""
+    name = (filename or "").lower()
+    if name.endswith(".docx"):
         doc = Document(io.BytesIO(raw))
         return "\n".join(p.text for p in doc.paragraphs)
+    if name.endswith(".pdf") or raw[:5] == b"%PDF-":
+        return _extract_pdf_text(raw)
     return raw.decode("utf-8-sig", errors="replace")
 
 
 def _fetch_text_sync(url: str) -> str:
     r = httpx.get(url, timeout=15, follow_redirects=True)
     r.raise_for_status()
-    if "text/html" in r.headers.get("content-type", ""):
+    ctype = r.headers.get("content-type", "")
+    if "application/pdf" in ctype or r.content[:5] == b"%PDF-":
+        return _extract_pdf_text(r.content)
+    if "text/html" in ctype:
         html = re.sub(r"<(script|style)[\s\S]*?</\1>", " ", r.text, flags=re.I)
         return re.sub(r"[ \t]+", " ", re.sub(r"<[^>]+>", " ", html)).strip()
     return r.text
@@ -121,12 +138,20 @@ async def generate(
     elif workflow_url.strip():
         try:
             text = await asyncio.to_thread(_fetch_text_sync, workflow_url.strip())
+        except HTTPException:
+            raise
         except Exception as exc:  # noqa: BLE001
             raise HTTPException(400, f"Couldn't fetch the workflow link: {exc}")
     elif workflow_text.strip():
         text = workflow_text
     text = text.strip()
     if len(text) < 20:
+        if workflow_file is not None or workflow_url.strip():
+            raise HTTPException(
+                400,
+                "Couldn't extract readable text from that source — a scanned or image-only "
+                "PDF has no text layer. Paste the steps, or upload a text-based .pdf/.docx/.txt/.md.",
+            )
         raise HTTPException(
             400, "Provide the tested workflow — paste the steps, upload a file, or give a link."
         )

@@ -233,7 +233,7 @@ export default function Lab4JobAid() {
           )}
           {wfMode === 'upload' && (
             <label className="file-field">
-              <input type="file" accept=".txt,.md,.docx" onChange={(e) => setWfFile(e.target.files?.[0] ?? null)} />
+              <input type="file" accept=".txt,.md,.docx,.pdf" onChange={(e) => setWfFile(e.target.files?.[0] ?? null)} />
               <span className="file-trigger"><Upload width={15} height={15} /> Choose file</span>
               <span className={`file-name ${wfFile ? '' : 'none'}`}>{wfFile ? wfFile.name : 'No file selected'}</span>
             </label>

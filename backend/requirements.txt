@@ -12,6 +12,7 @@ psycopg[binary]
 
 # Document generation (Lab 4)
 python-docx
+pypdf                     # extract text from uploaded/linked PDF workflows
 
 # Lab 5 — external DB connectors + credential encryption + read-only SQL validation
 cryptography              # Fernet encryption of stored target-DB passwords at rest
