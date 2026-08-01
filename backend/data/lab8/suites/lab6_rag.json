@@ -1,0 +1,39 @@
+{
+  "suite": "lab6_rag",
+  "title": "Lab 6 — RAG retrieval + grounded answers",
+  "description": "Retrieval cases are free and deterministic (no model call): the expected document must appear in the fused top-k. Answer cases run the real grounded-generation path and check citations, expected facts, and correct refusal; the optional LLM judge scores faithfulness to the retrieved context.",
+  "target": "lab6",
+  "heavy": false,
+  "cases": [
+    { "id": "r-validity", "type": "retrieval", "question": "How long is a building permit valid?", "expect_doc": "04-expiration-renewal" },
+    { "id": "r-extension", "type": "retrieval", "question": "Can I extend my permit before it expires?", "expect_doc": "04-expiration-renewal" },
+    { "id": "r-reinspection-fee", "type": "retrieval", "question": "What is the reinspection fee?", "expect_doc": "02-fees-and-payment" },
+    { "id": "r-inspection-notice", "type": "retrieval", "question": "How much notice do I need to schedule an inspection?", "expect_doc": "03-inspections" },
+    { "id": "r-appeal", "type": "retrieval", "question": "How do I appeal a permit denial and what is the deadline?", "expect_doc": "06-appeals" },
+    { "id": "r-insurance", "type": "retrieval", "question": "What insurance must a licensed contractor carry?", "expect_doc": "05-contractor-licensing" },
+    { "id": "r-light-switch", "type": "retrieval", "question": "Do I need a permit to replace a light switch?", "expect_doc": "07-electrical-standards" },
+    { "id": "r-records", "type": "retrieval", "question": "How long are permit records retained?", "expect_doc": "08-records-privacy" },
+    { "id": "r-documents", "type": "retrieval", "question": "What documents are required with a permit application?", "expect_doc": "01-application-intake" },
+    {
+      "id": "a-reinspection-fee",
+      "type": "answer",
+      "question": "What is the reinspection fee and when is it charged?",
+      "expect_contains": ["$75"],
+      "expect_refusal": false
+    },
+    {
+      "id": "a-permit-validity",
+      "type": "answer",
+      "question": "How long is a building permit valid from issuance?",
+      "expect_contains": ["180"],
+      "expect_refusal": false
+    },
+    {
+      "id": "a-off-corpus-refusal",
+      "type": "answer",
+      "question": "What are the noise rules for weekend construction?",
+      "expect_refusal": true,
+      "note": "Grounding contract: the corpus does not cover this — a made-up answer is a fail."
+    }
+  ]
+}

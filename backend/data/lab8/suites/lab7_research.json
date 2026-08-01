@@ -1,0 +1,18 @@
+{
+  "suite": "lab7_research",
+  "title": "Lab 7 — Research brief SLOs",
+  "description": "Heavy (live web + multi-agent, minutes per case): runs the planned-mode pipeline end to end and checks service-level objectives — a brief is produced, every citation number exists, enough independent sources were gathered, and cost and wall-time stay under the ceilings.",
+  "target": "lab7",
+  "heavy": true,
+  "cases": [
+    {
+      "id": "mcp-security-brief",
+      "type": "research",
+      "question": "What are current best practices for securing MCP servers?",
+      "breadth": 2,
+      "min_sources": 4,
+      "max_cost_usd": 2.0,
+      "max_seconds": 360
+    }
+  ]
+}

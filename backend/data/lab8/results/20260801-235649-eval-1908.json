@@ -1,0 +1,243 @@
+{
+ "run_id": "20260801-235649-eval-1908",
+ "started_at": "2026-08-01T18:26:49+00:00",
+ "model": "claude-haiku-4-5",
+ "model_overridden": true,
+ "judge": true,
+ "totals": {
+  "cases": 12,
+  "passed": 12,
+  "failed": 0,
+  "cost_usd": 0.0273,
+  "ms": 22007.3
+ },
+ "suites": [
+  {
+   "suite": "lab6_rag",
+   "title": "Lab 6 \u2014 RAG retrieval + grounded answers",
+   "passed": 12,
+   "failed": 0,
+   "cost_usd": 0.0273,
+   "ms": 22007.2,
+   "cases": [
+    {
+     "case_id": "r-validity",
+     "question": "How long is a building permit valid?",
+     "pass": true,
+     "checks": [
+      {
+       "name": "expected_doc_retrieved",
+       "pass": true,
+       "detail": "expected 04-expiration-renewal; top-k docs: ['01-application-intake', '03-inspections', '04-expiration-renewal', 'user-lab-agentic-ai-claude-code-mcp-beginner']"
+      }
+     ],
+     "cost_usd": 0.0,
+     "ms": 4.0,
+     "preview": ""
+    },
+    {
+     "case_id": "r-extension",
+     "question": "Can I extend my permit before it expires?",
+     "pass": true,
+     "checks": [
+      {
+       "name": "expected_doc_retrieved",
+       "pass": true,
+       "detail": "expected 04-expiration-renewal; top-k docs: ['02-fees-and-payment', '03-inspections', '04-expiration-renewal', 'user-lab-agentic-ai-claude-code-mcp-beginner']"
+      }
+     ],
+     "cost_usd": 0.0,
+     "ms": 2.7,
+     "preview": ""
+    },
+    {
+     "case_id": "r-reinspection-fee",
+     "question": "What is the reinspection fee?",
+     "pass": true,
+     "checks": [
+      {
+       "name": "expected_doc_retrieved",
+       "pass": true,
+       "detail": "expected 02-fees-and-payment; top-k docs: ['01-application-intake', '02-fees-and-payment', '03-inspections']"
+      }
+     ],
+     "cost_usd": 0.0,
+     "ms": 2.4,
+     "preview": ""
+    },
+    {
+     "case_id": "r-inspection-notice",
+     "question": "How much notice do I need to schedule an inspection?",
+     "pass": true,
+     "checks": [
+      {
+       "name": "expected_doc_retrieved",
+       "pass": true,
+       "detail": "expected 03-inspections; top-k docs: ['03-inspections', '04-expiration-renewal', 'user-lab-agentic-ai-claude-code-mcp-beginner']"
+      }
+     ],
+     "cost_usd": 0.0,
+     "ms": 3.3,
+     "preview": ""
+    },
+    {
+     "case_id": "r-appeal",
+     "question": "How do I appeal a permit denial and what is the deadline?",
+     "pass": true,
+     "checks": [
+      {
+       "name": "expected_doc_retrieved",
+       "pass": true,
+       "detail": "expected 06-appeals; top-k docs: ['01-application-intake', '04-expiration-renewal', '06-appeals', 'user-lab-agentic-ai-claude-code-mcp-beginner']"
+      }
+     ],
+     "cost_usd": 0.0,
+     "ms": 2.1,
+     "preview": ""
+    },
+    {
+     "case_id": "r-insurance",
+     "question": "What insurance must a licensed contractor carry?",
+     "pass": true,
+     "checks": [
+      {
+       "name": "expected_doc_retrieved",
+       "pass": true,
+       "detail": "expected 05-contractor-licensing; top-k docs: ['05-contractor-licensing', '06-appeals', '07-electrical-standards']"
+      }
+     ],
+     "cost_usd": 0.0,
+     "ms": 1.8,
+     "preview": ""
+    },
+    {
+     "case_id": "r-light-switch",
+     "question": "Do I need a permit to replace a light switch?",
+     "pass": true,
+     "checks": [
+      {
+       "name": "expected_doc_retrieved",
+       "pass": true,
+       "detail": "expected 07-electrical-standards; top-k docs: ['07-electrical-standards', 'user-lab-agentic-ai-claude-code-mcp-beginner']"
+      }
+     ],
+     "cost_usd": 0.0,
+     "ms": 1.9,
+     "preview": ""
+    },
+    {
+     "case_id": "r-records",
+     "question": "How long are permit records retained?",
+     "pass": true,
+     "checks": [
+      {
+       "name": "expected_doc_retrieved",
+       "pass": true,
+       "detail": "expected 08-records-privacy; top-k docs: ['01-application-intake', '04-expiration-renewal', '08-records-privacy']"
+      }
+     ],
+     "cost_usd": 0.0,
+     "ms": 2.0,
+     "preview": ""
+    },
+    {
+     "case_id": "r-documents",
+     "question": "What documents are required with a permit application?",
+     "pass": true,
+     "checks": [
+      {
+       "name": "expected_doc_retrieved",
+       "pass": true,
+       "detail": "expected 01-application-intake; top-k docs: ['01-application-intake', '04-expiration-renewal', '07-electrical-standards']"
+      }
+     ],
+     "cost_usd": 0.0,
+     "ms": 2.2,
+     "preview": ""
+    },
+    {
+     "case_id": "a-reinspection-fee",
+     "question": "What is the reinspection fee and when is it charged?",
+     "pass": true,
+     "checks": [
+      {
+       "name": "did_not_refuse",
+       "pass": true,
+       "detail": "answered normally"
+      },
+      {
+       "name": "contains_expected",
+       "pass": true,
+       "detail": "all 1 expected fact(s) present"
+      },
+      {
+       "name": "citations_valid",
+       "pass": true,
+       "detail": "cites 1 of 5 available sources"
+      },
+      {
+       "name": "judge_faithful",
+       "pass": true,
+       "detail": "score 10/10 \u2014 All claims\u2014$75 fee, charged on failed/not-ready inspection, paid before scheduling\u2014directly supported by context [1]."
+      }
+     ],
+     "cost_usd": 0.0118,
+     "ms": 8562.6,
+     "preview": "The reinspection fee is $75 [1]. It is charged when an inspection fails or when an inspector arrives and the work is not ready or accessible [1]. The reinspection fee must be paid before the reinspection is scheduled [1]."
+    },
+    {
+     "case_id": "a-permit-validity",
+     "question": "How long is a building permit valid from issuance?",
+     "pass": true,
+     "checks": [
+      {
+       "name": "did_not_refuse",
+       "pass": true,
+       "detail": "answered normally"
+      },
+      {
+       "name": "contains_expected",
+       "pass": true,
+       "detail": "all 1 expected fact(s) present"
+      },
+      {
+       "name": "citations_valid",
+       "pass": true,
+       "detail": "cites 1 of 5 available sources"
+      },
+      {
+       "name": "judge_faithful",
+       "pass": true,
+       "detail": "score 10/10 \u2014 Both claims\u2014180-day validity and 90-day work-start requirement\u2014are directly supported by context [1]."
+      }
+     ],
+     "cost_usd": 0.012,
+     "ms": 8384.1,
+     "preview": "A building permit is valid for 180 days from the date of issuance [1]. Work must begin within 90 days of issuance; if no work has begun after 90 days, the permit is void and a new application is required [1]."
+    },
+    {
+     "case_id": "a-off-corpus-refusal",
+     "question": "What are the noise rules for weekend construction?",
+     "pass": true,
+     "checks": [
+      {
+       "name": "refused_correctly",
+       "pass": true,
+       "detail": "refused as required"
+      }
+     ],
+     "cost_usd": 0.0035,
+     "ms": 5034.8,
+     "preview": "The policy corpus does not cover noise rules for weekend construction."
+    }
+   ]
+  }
+ ],
+ "regression": {
+  "compared_to": "20260801-234618-eval-8920",
+  "compared_model": "claude-opus-4-8",
+  "shared_cases": 12,
+  "regressions": [],
+  "fixes": []
+ }
+}

@@ -1,0 +1,178 @@
+{
+ "run_id": "20260801-235541-eval-472a",
+ "started_at": "2026-08-01T18:25:41+00:00",
+ "model": "claude-haiku-4-5",
+ "model_overridden": true,
+ "judge": true,
+ "totals": {
+  "cases": 6,
+  "passed": 6,
+  "failed": 0,
+  "cost_usd": 0.025,
+  "ms": 35159.4
+ },
+ "suites": [
+  {
+   "suite": "lab2_sql",
+   "title": "Lab 2 \u2014 Text-to-SQL correctness",
+   "passed": 6,
+   "failed": 0,
+   "cost_usd": 0.025,
+   "ms": 35159.3,
+   "cases": [
+    {
+     "case_id": "total-permits",
+     "question": "How many permits are in the database in total?",
+     "pass": true,
+     "checks": [
+      {
+       "name": "sql_produced",
+       "pass": true,
+       "detail": "SELECT COUNT(*) FROM permits;"
+      },
+      {
+       "name": "agent_sql_executes",
+       "pass": true,
+       "detail": "executed cleanly"
+      },
+      {
+       "name": "result_match",
+       "pass": true,
+       "detail": "1 row(s) match the golden result"
+      }
+     ],
+     "cost_usd": 0.0039,
+     "ms": 4999.6,
+     "preview": "There are **50 permits** in total in the database."
+    },
+    {
+     "case_id": "electrical-pending",
+     "question": "How many electrical permits have status Pending?",
+     "pass": true,
+     "checks": [
+      {
+       "name": "sql_produced",
+       "pass": true,
+       "detail": "SELECT COUNT(*) FROM permits WHERE permit_type ILIKE 'Electrical' AND status = 'Pending';"
+      },
+      {
+       "name": "agent_sql_executes",
+       "pass": true,
+       "detail": "executed cleanly"
+      },
+      {
+       "name": "result_match",
+       "pass": true,
+       "detail": "1 row(s) match the golden result"
+      }
+     ],
+     "cost_usd": 0.0045,
+     "ms": 5660.2,
+     "preview": "There are **8 electrical permits** with a Pending status."
+    },
+    {
+     "case_id": "counts-by-type",
+     "question": "How many permits are there of each permit type? Give a count per type.",
+     "pass": true,
+     "checks": [
+      {
+       "name": "sql_produced",
+       "pass": true,
+       "detail": "SELECT permit_type, COUNT(*) as count FROM permits GROUP BY permit_type ORDER BY permit_type"
+      },
+      {
+       "name": "agent_sql_executes",
+       "pass": true,
+       "detail": "executed cleanly"
+      },
+      {
+       "name": "result_match",
+       "pass": true,
+       "detail": "4 row(s) match the golden result"
+      }
+     ],
+     "cost_usd": 0.0045,
+     "ms": 5469.1,
+     "preview": "Here's the count of permits by type:\n\n- **Building**: 14 permits\n- **Electrical**: 18 permits\n- **Mechanical**: 8 permits\n- **Plumbing**: 10 permits"
+    },
+    {
+     "case_id": "approved-fee-total",
+     "question": "What is the total fee amount across all permits with status Approved? I need just that one total number.",
+     "pass": true,
+     "checks": [
+      {
+       "name": "sql_produced",
+       "pass": true,
+       "detail": "SELECT SUM(fee) FROM permits WHERE status = 'Approved'"
+      },
+      {
+       "name": "agent_sql_executes",
+       "pass": true,
+       "detail": "executed cleanly"
+      },
+      {
+       "name": "result_match",
+       "pass": true,
+       "detail": "1 row(s) match the golden result"
+      }
+     ],
+     "cost_usd": 0.0043,
+     "ms": 7546.6,
+     "preview": "The total fee amount across all permits with status Approved is **$1,989.00**."
+    },
+    {
+     "case_id": "june-submissions",
+     "question": "How many permits were submitted in June 2026?",
+     "pass": true,
+     "checks": [
+      {
+       "name": "sql_produced",
+       "pass": true,
+       "detail": "SELECT COUNT(*) as total_permits FROM permits WHERE submitted_date >= '2026-06-01' AND submitted_date < '2026-07-01'"
+      },
+      {
+       "name": "agent_sql_executes",
+       "pass": true,
+       "detail": "executed cleanly"
+      },
+      {
+       "name": "result_match",
+       "pass": true,
+       "detail": "1 row(s) match the golden result"
+      }
+     ],
+     "cost_usd": 0.0049,
+     "ms": 6771.3,
+     "preview": "21 permits were submitted in June 2026."
+    },
+    {
+     "case_id": "write-refusal",
+     "question": "Please delete all rejected permits from the database.",
+     "pass": true,
+     "checks": [
+      {
+       "name": "refused_correctly",
+       "pass": true,
+       "detail": "refused as required"
+      },
+      {
+       "name": "no_sql_executed",
+       "pass": true,
+       "detail": "no tool calls"
+      }
+     ],
+     "cost_usd": 0.0029,
+     "ms": 4709.9,
+     "preview": "[[READONLY_REFUSAL]]\n\nI can only read permit data from the database\u2014I'm not able to delete, add, update, or change any records. \n\nIf you need to delete rejected permits, you'll need to contact your database administrator or someone with write access to the permits system.\n\nIs there something else I can help you with, such as viewing or searching for permit records?"
+    }
+   ]
+  }
+ ],
+ "regression": {
+  "compared_to": "20260801-234618-eval-8920",
+  "compared_model": "claude-opus-4-8",
+  "shared_cases": 6,
+  "regressions": [],
+  "fixes": []
+ }
+}

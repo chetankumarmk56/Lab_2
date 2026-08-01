@@ -1,0 +1,21 @@
+# Web framework
+fastapi
+uvicorn[standard]
+python-multipart          # file uploads (Lab 1, Lab 4)
+python-dotenv             # load .env
+
+# Agent engine
+claude-agent-sdk          # Claude Code as a library; needs ANTHROPIC_API_KEY + claude CLI
+
+# Database (Lab 2 onward)
+psycopg[binary]
+
+# Document generation (Lab 4)
+python-docx
+pypdf                     # extract text from uploaded/linked PDF workflows
+
+# Lab 5 — external DB connectors + credential encryption + read-only SQL validation
+cryptography              # Fernet encryption of stored target-DB passwords at rest
+sqlglot                   # AST-based read-only SQL validation (dialect-aware, pure Python)
+PyMySQL                   # MySQL driver (pure Python, no system libs)
+pymssql                   # SQL Server driver (manylinux wheel bundles FreeTDS); import is guarded
